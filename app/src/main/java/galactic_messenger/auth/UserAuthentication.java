@@ -21,7 +21,11 @@ public class UserAuthentication {
 					hashed_pswrd_str += (char) hashedPassword[i];
 				}
 				
-				return DatabaseManager.getPassword(username).equals(hashed_pswrd_str);
+				String cmp_passwrd = DatabaseManager.getPassword(username);
+				
+				if (cmp_passwrd != null)
+					return cmp_passwrd.equals(hashed_pswrd_str);
+				return false;
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			}

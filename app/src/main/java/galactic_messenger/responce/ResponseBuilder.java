@@ -38,7 +38,7 @@ public class ResponseBuilder {
 	
 	public static String buildDeclineResponse(String command, String metadata) {
 		String[] datalist = {strSet(ResponseKey.COMMAND, command), strSet(ResponseKey.METADATA, metadata)};
-		return buildResponse(ResponseType.ACCEPT_REQUEST, datalist);
+		return buildResponse(ResponseType.DECLINE_REQUEST, datalist);
 	}
 	
 	public static String buildMessageResponse(String message, String sender) {

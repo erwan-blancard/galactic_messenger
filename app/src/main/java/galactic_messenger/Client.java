@@ -140,10 +140,11 @@ public class Client {
 			String requestCMD = requestArgs[0].substring(1);
 			HashMap<String, Object> responseArgs = ResponseParser.parseResponse(serverResponse);
 			if (responseArgs == null) { System.out.println("Invalid server response (invalid ResponseType)"); return; }
+			/*
 			if (!requestCMD.equals(responseArgs.get(ResponseKey.COMMAND.key))) {
 				System.out.println("Bad response handling for command.");
 				return;
-			}
+			}*/
 
 			short type = (short) responseArgs.get(ResponseKey.TYPE.key);
 			// limit available commands if not logged in
@@ -212,6 +213,8 @@ public class Client {
 						System.out.println("Invite accepted.");
 					} else if (type == ResponseType.BAD_REQUEST.type) {
 						System.out.println("Could not accept request. Check arguments.");
+					} else if (type == ResponseType.SERVER_CALLBACK.type) {
+						System.out.println(responseArgs.get(ResponseKey.RESPONSE_CONTENT.key));
 					} else {
 						System.out.println("["+type+"] Unhandled operation.");
 					}
@@ -221,6 +224,8 @@ public class Client {
 						System.out.println("Invite declined.");
 					} else if (type == ResponseType.BAD_REQUEST.type) {
 						System.out.println("Could not decline request. Check arguments.");
+					} else if (type == ResponseType.SERVER_CALLBACK.type) {
+						System.out.println(responseArgs.get(ResponseKey.RESPONSE_CONTENT.key));
 					} else {
 						System.out.println("["+type+"] Unhandled operation.");
 					}
@@ -239,7 +244,7 @@ public class Client {
 					} else if (type == ResponseType.SERVER_CALLBACK.type) {
 						System.out.println(responseArgs.get(ResponseKey.RESPONSE_CONTENT.key));
 					} else if (type == ResponseType.BAD_REQUEST.type) {
-						System.out.println("Could not decline request. Check arguments.");
+						System.out.println("Could not exit private chat.");
 					} else if (type == ResponseType.SERVER_ERROR.type) {
 						System.out.println("Chat leaved: the user was not found.");
 						privateChatUser = null;
@@ -394,6 +399,7 @@ public class Client {
 		Socket socket = null;
 		try {
 			socket = new Socket(ip, port);
+			socket.setSoTimeout(30000);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

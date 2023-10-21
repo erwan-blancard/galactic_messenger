@@ -23,6 +23,7 @@ public class Server {
 			while (!serverSocket.isClosed()) {
 				
 				Socket socket = serverSocket.accept();				// blocks the execution
+				socket.setSoTimeout(30000);
 				System.out.println("A new client has connected: remote address: "+socket.getRemoteSocketAddress());
 				ClientHandler clientHandler = new ClientHandler(socket, this);
 				

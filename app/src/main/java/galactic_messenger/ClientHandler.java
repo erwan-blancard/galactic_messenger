@@ -56,7 +56,7 @@ public class ClientHandler implements Runnable {
 			try {
 				clientRequest = reader.readLine();
 				if (clientRequest != null) {
-					System.out.println("request: "+clientRequest);
+					System.out.println(((user != null) ? user.getName() : socket.getLocalSocketAddress())+": "+clientRequest);
 					processRequest(clientRequest.strip().split(" "));
 				}
 			} catch(IOException e) {
@@ -106,8 +106,13 @@ public class ClientHandler implements Runnable {
 	}
 
 	private void handlePrivateChatExit(String[] requestArgs) {
-		if (requestArgs.length != 1 || privateChatUser == null) {
+		if (requestArgs.length != 1) {
 			sendDataToClient(ResponseBuilder.buildBadResponse(requestArgs[0]));
+			return;
+		}
+		
+		if (privateChatUser == null) {
+			sendDataToClient(ResponseBuilder.buildServerCallback(requestArgs[0], "You are not in a private chat."));
 			return;
 		}
 		
@@ -129,6 +134,11 @@ public class ClientHandler implements Runnable {
 			return;
 		}
 		
+		if (pendingInvites.isEmpty()) {
+			sendDataToClient(ResponseBuilder.buildServerCallback(requestArgs[0], "You have no pending invites."));
+			return;
+		}
+		
 		String user = requestArgs[1];
 		for (User userInInvite : pendingInvites) {
 			if (userInInvite.getName().equals(user)) {
@@ -140,7 +150,7 @@ public class ClientHandler implements Runnable {
 						return;
 					}
 				}
-				sendDataToClient(ResponseBuilder.buildBadResponse(requestArgs[0]));
+				sendDataToClient(ResponseBuilder.buildServerCallback(requestArgs[0], "This user didn't sent you a private chat request."));
 			}
 		}
 	}
@@ -148,6 +158,11 @@ public class ClientHandler implements Runnable {
 	private void handlePrivateChatAccept(String[] requestArgs) {
 		if (requestArgs.length != 2) {
 			sendDataToClient(ResponseBuilder.buildBadResponse(requestArgs[0]));
+			return;
+		}
+		
+		if (pendingInvites.isEmpty()) {
+			sendDataToClient(ResponseBuilder.buildServerCallback(requestArgs[0], "You have no pending invites."));
 			return;
 		}
 		
@@ -162,7 +177,7 @@ public class ClientHandler implements Runnable {
 						return;
 					}
 				}
-				sendDataToClient(ResponseBuilder.buildBadResponse(requestArgs[0]));
+				sendDataToClient(ResponseBuilder.buildServerCallback(requestArgs[0], "This user didn't sent you a private chat request."));
 			}
 		}
 	}
@@ -178,7 +193,7 @@ public class ClientHandler implements Runnable {
 			for (ClientHandler ch : clientHandlers) {
 				if (ch.user.getName().equals(user)) {
 					ch.pendingInvites.add(this.user);
-					ch.sendDataToClient(ResponseBuilder.buildMessageResponse(this.user.getName()+" wants to start a private chat! Use /accept \"user\" or /decline \"user\" to answer.", "SERVER"));
+					ch.sendDataToClient(ResponseBuilder.buildMessageResponse(this.user.getName()+" wants to start a private chat! Use /accept [user] or /decline [user] to answer.", "SERVER"));
 					break;
 				}
 			}
@@ -194,23 +209,23 @@ public class ClientHandler implements Runnable {
 				users.add(ch.user.getName());
 			}
 		}
-		String data = users.toString();
-		if (users.isEmpty()) {
-			data = "No users online.";
-		} else {
-			data = data.substring(1, data.length()-1);
+		String data = "No users online.";
+		if (!users.isEmpty()) {
+			String users_list_str = users.toString();
+			data = users_list_str.substring(1, users_list_str.length()-1);
 		}
 		// send list -> user1, user2, etc
 		sendDataToClient(ResponseBuilder.buildServerCallback(requestArgs[0], data));
 	}
 
 	private void handleLogin(String[] requestArgs) {
-		System.out.println("args:");
-		for(int i = 0; i<requestArgs.length; i++) {
-			System.out.println(requestArgs[i]);
-		}
 		if (requestArgs.length != 3) {
 			sendDataToClient(ResponseBuilder.buildBadResponse(requestArgs[0]));
+			return;
+		}
+		
+		if (User.isUserOnline(requestArgs[1])) {
+			sendDataToClient(ResponseBuilder.buildDeclineResponse(requestArgs[0], "User is already online."));
 			return;
 		}
 		
@@ -233,7 +248,7 @@ public class ClientHandler implements Runnable {
 			if (DatabaseManager.registerUser(requestArgs[1], requestArgs[2])) {
 				sendDataToClient(ResponseBuilder.buildAcceptResponse(requestArgs[0], "OK"));
 			} else {
-				sendDataToClient(ResponseBuilder.buildServerErrorResponse(requestArgs[0]));
+				sendDataToClient(ResponseBuilder.buildBadResponse(requestArgs[0]));
 			}
 		} else {
 			sendDataToClient(ResponseBuilder.buildDeclineResponse(requestArgs[0], "User already exists."));

@@ -59,7 +59,7 @@ public class DatabaseManager {
 	}
 	
 	public static boolean registerUser(String username, String plain_password) {
-		if (!username.toUpperCase().equals("SERVER") || username.length() < 4
+		if (username.toUpperCase().equals("SERVER") || username.length() < 4
 				||hasUser(username)) {
 			return false;
 		}
